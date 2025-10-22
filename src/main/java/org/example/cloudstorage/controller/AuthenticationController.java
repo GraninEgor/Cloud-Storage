@@ -11,17 +11,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
     private final AuthService authService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<Map<String, String>> singUp(@RequestBody UserDto userDto){
+    public ResponseEntity<Map<String, String>> singUp(@RequestBody UserDto userDto){                                                                 
         UserDto savedUser = authService.save(userDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("username", savedUser.getUsername()));
     }
-
 
 }

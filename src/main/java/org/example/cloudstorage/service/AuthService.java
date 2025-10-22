@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    @Value("${app.min-user-length}")
-    private Integer minUsernameLength;
+    @Value("${app.min-username-length}")
+    private int minUsernameLength;
 
     private final UserRepository userRepository;
 
