@@ -26,7 +26,7 @@ public class AuthService {
             throw new UserValidationException("Длина username должна быть больше " + minUsernameLength);
         }
 
-        if (userRepository.existsByUsername(userDto.getUsername())) {
+        if (userRepository.existsByUsername(userDto.getUsername()).isPresent()) {
             throw new UserValidationException("Пользователь с username" + userDto.getUsername() + " уже существует");
         }
 
