@@ -1,10 +1,12 @@
 package org.example.cloudstorage.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.UserDto;
-import org.example.cloudstorage.service.UserService;
+import org.example.cloudstorage.dto.UserRegisterDto;
+import org.example.cloudstorage.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -14,12 +16,17 @@ import java.util.Map;
 @RequestMapping("/api")
 public class AuthenticationController {
 
-    private final UserService userService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<Map<String, String>> singUp(@RequestBody UserDto userDto){                                                                 
-        UserDto savedUser = userService.save(userDto);
+    public ResponseEntity<Map<String, String>> singUp(@RequestBody UserRegisterDto userRegisterDto){
+        UserRegisterDto savedUser = authenticationService.save(userRegisterDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("username", savedUser.getUsername()));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity getCurrentUser(@AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(Map.of("username", userDetails.getUsername()));
     }
 
 }

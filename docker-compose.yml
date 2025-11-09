@@ -12,6 +12,16 @@ services:
       retries: 5
     volumes:
       - db-data:/var/lib/postgresql/data
-
+  backend:
+    image: cloud_storage_backend
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth_db:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
 volumes:
   db-data:

@@ -1,10 +1,8 @@
 package org.example.cloudstorage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import lombok.SneakyThrows;
 import org.example.cloudstorage.database.repository.UserRepository;
-import org.example.cloudstorage.dto.UserDto;
-import org.example.cloudstorage.mapper.UserMapper;
+import org.example.cloudstorage.dto.UserRegisterDto;
+import org.example.cloudstorage.mapper.UserRegisterMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,22 +39,22 @@ public class AuthenticationControllerIT {
 
     @Test
     void testRegistration_Success() throws Exception {
-        UserDto userDto = new UserDto("pudge", "111");
+        UserRegisterDto userRegisterDto = new UserRegisterDto("pudge", "111");
         mockMvc.perform(post("/api/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDto)))
+                        .content(objectMapper.writeValueAsString(userRegisterDto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username").value(userDto.getUsername()));
+                .andExpect(jsonPath("$.username").value(userRegisterDto.getUsername()));
     }
 
     @Test
     void testLogin_Success() throws Exception {
-        UserDto userDto = new UserDto("pudge", "111");
-        userRepository.save(UserMapper.toEntity(userDto));
+        UserRegisterDto userRegisterDto = new UserRegisterDto("pudge", "111");
+        userRepository.save(UserRegisterMapper.toEntity(userRegisterDto));
         mockMvc.perform(post("/api/sign-in")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userDto)))
+                        .content(objectMapper.writeValueAsString(userRegisterDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(userDto.getUsername()));
+                .andExpect(jsonPath("$.username").value(userRegisterDto.getUsername()));
     }
 }
