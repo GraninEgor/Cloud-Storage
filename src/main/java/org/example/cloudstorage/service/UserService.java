@@ -8,13 +8,18 @@ import org.example.cloudstorage.exception.UserValidationException;
 import org.example.cloudstorage.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class AuthService {
+public class UserService implements UserDetailsService {
 
     @Value("${app.min-username-length}")
     private int minUsernameLength;
@@ -26,7 +31,7 @@ public class AuthService {
             throw new UserValidationException("Длина username должна быть больше " + minUsernameLength);
         }
 
-        if (userRepository.existsByUsername(userDto.getUsername()).isPresent()) {
+        if (userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {
             throw new UserValidationException("Пользователь с username" + userDto.getUsername() + " уже существует");
         }
 
@@ -38,5 +43,17 @@ public class AuthService {
         }
 
         return UserMapper.toDto(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findUserByUsername(username)
+                .map(user -> org.springframework.security.core.userdetails.User
+                        .withUsername(user.getUsername())
+                        .password(user.getPassword())
+                        .authorities("USER")
+                        .build()
+                )
+                .orElseThrow(() -> new UsernameNotFoundException("Не удалось получить user " + username));
     }
 }

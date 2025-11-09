@@ -19,7 +19,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/sign-up",
-                                "/sign-in",
+                                "/api/sign-in",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
@@ -27,7 +27,7 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginProcessingUrl("/sign-in")
+                        .loginProcessingUrl("/api/sign-in")
                         .successHandler((request, response, authentication) ->
                                         response.setStatus(HttpServletResponse.SC_OK)
                                 )
@@ -37,7 +37,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                                .logoutUrl("/sign-out")
+                                .logoutUrl("/api/sign-out")
                                 .logoutSuccessHandler((request, response, authentication) ->
                                         response.setStatus(HttpServletResponse.SC_NO_CONTENT)
                                         )
