@@ -10,13 +10,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -93,4 +96,16 @@ public class AuthenticationControllerIT {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void testCheckCurrentUser_Success() throws Exception {
+        UserRegisterDto userRegisterDto = new UserRegisterDto("pudge", "111");
+        mockMvc.perform(post("/api/sign-up")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userRegisterDto)));
+        MvcResult result = mockMvc.perform(post("/api/sign-in")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userRegisterDto))).andExpect(status().isOk()).andReturn();
+        MockHttpSession session = (MockHttpSession) result.getRequest().getSession();
+        mockMvc.perform(get("/api/me").session(session)).andExpect(status().isOk()).andExpect(jsonPath("$.username").value(userRegisterDto.getUsername()));
+    }
 }
