@@ -28,7 +28,7 @@ public class AuthenticationService implements UserDetailsService {
 
     public UserRegisterDto save(UserRegisterDto userRegisterDto) {
         if(userRegisterDto.getUsername().length() < minUsernameLength){
-            throw new UserValidationException("Длина username должна быть больше " + minUsernameLength);
+            throw new UserValidationException("Длина username должна не меньше " + minUsernameLength + " символов");
         }
 
         if (userRepository.findUserByUsername(userRegisterDto.getUsername()).isPresent()) {

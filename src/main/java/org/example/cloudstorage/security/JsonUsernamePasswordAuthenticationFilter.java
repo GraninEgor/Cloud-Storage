@@ -42,6 +42,10 @@ public class JsonUsernamePasswordAuthenticationFilter extends UsernamePasswordAu
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        String username = authResult.getName();
+        String jsonResponse = String.format("{\"username\": \"%s\"}", username);
+        response.getWriter().write(jsonResponse);
     }
 
     @Override
