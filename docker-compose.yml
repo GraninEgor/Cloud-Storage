@@ -23,5 +23,16 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth_db:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+  cloud_storage_db:
+    image: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: root
+
+      volumes:
+        ./minio_data:/data
 volumes:
   db-data:

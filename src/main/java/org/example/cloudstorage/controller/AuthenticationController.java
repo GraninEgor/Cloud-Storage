@@ -25,7 +25,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<Map<String, String>> singUp(@RequestBody UserRegisterDto userRegisterDto){
+    public ResponseEntity<Map<String, String>> signUp(@RequestBody UserRegisterDto userRegisterDto){
         UserRegisterDto savedUser = authenticationService.save(userRegisterDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("username", savedUser.getUsername()));
     }
