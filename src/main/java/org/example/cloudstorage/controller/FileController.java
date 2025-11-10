@@ -14,15 +14,21 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 @RestController
-@RequestMapping("/api/resource")
+@RequestMapping(value = "/api/resource")
 @RequiredArgsConstructor
 public class FileController {
 
     private final FileService fileService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<FileInfoDto> upload(@RequestParam("file") MultipartFile file) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public ResponseEntity<FileInfoDto> upload(@RequestPart("file") MultipartFile file) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         FileInfoDto fileInfo = fileService.upload(file);
+        return ResponseEntity.ok(fileInfo);
+    }
+
+    @GetMapping
+    public ResponseEntity<FileInfoDto> get(@RequestParam String path) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        FileInfoDto fileInfo = fileService.getInfo(path);
         return ResponseEntity.ok(fileInfo);
     }
 }

@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class FileInfoDto {
     private String path;
     private String name;
-    private String size;
+    private Long size;
     private String type;
 }
