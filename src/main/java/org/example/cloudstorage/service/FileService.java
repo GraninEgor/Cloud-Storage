@@ -9,11 +9,13 @@ import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ObjectNotFoundException;
 import org.example.cloudstorage.util.FilePathUtil;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -42,9 +44,9 @@ public class FileService {
             return new FileInfoDto(FilePathUtil.getResourceName(path), FilePathUtil.getPath(path), response.size(), FilePathUtil.getType(path));
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals("NoSuchKey")) {
-                throw new ObjectNotFoundException("oject not found");
+                throw new ObjectNotFoundException("object not found");
             }
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "minio error");
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -53,14 +55,32 @@ public class FileService {
             throw new InvalidPathException("Invalid path");
         }
         try{
-            minioClient.statObject(
-                    StatObjectArgs.builder().bucket(bucketName).object(path).build());
+            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(path).build());
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals("NoSuchKey")) {
-                throw new ObjectNotFoundException("oject not found");
+                throw new ObjectNotFoundException("object not found");
             }
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "minio error");
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
-        minioClient.removeObject(RemoveObjectArgs.builder().object(path).build());
+    }
+
+    public InputStreamResource getFile(String path) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        if(!FilePathUtil.isValid(path)){
+            throw new InvalidPathException("Invalid path");
+        }
+        try {
+            InputStream file = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(path)
+                            .build());
+
+            return new InputStreamResource(file);
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals("NoSuchKey")) {
+                throw new ObjectNotFoundException("object not found");
+            }
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 }

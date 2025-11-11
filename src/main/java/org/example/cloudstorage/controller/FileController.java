@@ -4,6 +4,8 @@ import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.dto.FileInfoDto;
 import org.example.cloudstorage.service.FileService;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,9 +34,17 @@ public class FileController {
         return ResponseEntity.ok(fileInfo);
     }
 
-    @DeleteMapping("delete")
-    public ResponseEntity<Void> deleteFile(@RequestParam String path){
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteFile(@RequestParam String path) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         fileService.delete(path);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/download")
+    public ResponseEntity<Resource> downloadFile(@RequestParam String path) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        InputStreamResource file = fileService.getFile(path);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(file);
     }
 }
