@@ -1,5 +1,8 @@
 package org.example.cloudstorage.service;
 
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.database.entity.User;
 import org.example.cloudstorage.database.repository.UserRepository;
@@ -16,17 +19,24 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class AuthenticationService implements UserDetailsService {
+
     @Value("${app.min-username-length}")
     private int minUsernameLength;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MinioClient minioClient;
 
-    public UserRegisterDto save(UserRegisterDto userRegisterDto) {
+    public UserRegisterDto save(UserRegisterDto userRegisterDto) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         if(userRegisterDto.getUsername().length() < minUsernameLength){
             throw new UserValidationException("Длина username должна не меньше " + minUsernameLength + " символов");
         }
@@ -40,6 +50,10 @@ public class AuthenticationService implements UserDetailsService {
 
         try {
             User savedUser = userRepository.save(user);
+            minioClient.putObject(
+                    PutObjectArgs.builder().bucket("my-bucketname").object("user-%s-files".formatted(savedUser.getId())).stream(
+                                    new ByteArrayInputStream(new byte[] {}), 0, -1)
+                            .build());
             return UserRegisterMapper.toDto(savedUser);
         } catch (DataIntegrityViolationException e) {
             throw new UsernameAlreadyExistsException("Пользователь с username" + userRegisterDto.getUsername() + " уже существует"); // если одновременно зарегистрируются доп. проверка

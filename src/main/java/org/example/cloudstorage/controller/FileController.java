@@ -21,8 +21,8 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<FileInfoDto> upload(@RequestPart("file") MultipartFile file) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        FileInfoDto fileInfo = fileService.upload(file);
+    public ResponseEntity<FileInfoDto> upload(@RequestPart("file") MultipartFile file, @RequestParam String path) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        FileInfoDto fileInfo = fileService.upload(file, path);
         return ResponseEntity.ok(fileInfo);
     }
 
@@ -31,4 +31,5 @@ public class FileController {
         FileInfoDto fileInfo = fileService.getInfo(path);
         return ResponseEntity.ok(fileInfo);
     }
+
 }
