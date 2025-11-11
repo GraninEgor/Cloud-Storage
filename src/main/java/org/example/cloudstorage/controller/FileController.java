@@ -21,15 +21,20 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<FileInfoDto> upload(@RequestPart("file") MultipartFile file, @RequestParam String path) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public ResponseEntity<FileInfoDto> uploadFile(@RequestPart("file") MultipartFile file, @RequestParam String path) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         FileInfoDto fileInfo = fileService.upload(file, path);
         return ResponseEntity.ok(fileInfo);
     }
 
     @GetMapping
-    public ResponseEntity<FileInfoDto> get(@RequestParam String path) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public ResponseEntity<FileInfoDto> getFileInfo(@RequestParam String path) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         FileInfoDto fileInfo = fileService.getInfo(path);
         return ResponseEntity.ok(fileInfo);
     }
 
+    @DeleteMapping("delete")
+    public ResponseEntity<Void> deleteFile(@RequestParam String path){
+        fileService.delete(path);
+        return ResponseEntity.noContent().build();
+    }
 }

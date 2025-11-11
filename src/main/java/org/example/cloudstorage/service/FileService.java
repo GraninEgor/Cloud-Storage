@@ -44,7 +44,23 @@ public class FileService {
             if (e.errorResponse().code().equals("NoSuchKey")) {
                 throw new ObjectNotFoundException("oject not found");
             }
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "server error");
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "minio error");
         }
+    }
+
+    public void delete(String path) throws ServerException, InsufficientDataException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, ErrorResponseException {
+        if(!FilePathUtil.isValid(path)){
+            throw new InvalidPathException("Invalid path");
+        }
+        try{
+            minioClient.statObject(
+                    StatObjectArgs.builder().bucket(bucketName).object(path).build());
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals("NoSuchKey")) {
+                throw new ObjectNotFoundException("oject not found");
+            }
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "minio error");
+        }
+        minioClient.removeObject(RemoveObjectArgs.builder().object(path).build());
     }
 }
