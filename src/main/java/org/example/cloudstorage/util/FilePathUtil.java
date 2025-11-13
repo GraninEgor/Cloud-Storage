@@ -24,7 +24,7 @@ public class FilePathUtil {
         }
     }
 
-    public static String getPath(String path){
+    public static String getResourcePath(String path){
         if(getType(path).equals("FILE")){
             return path.substring(path.lastIndexOf('/') + 1);
         }
