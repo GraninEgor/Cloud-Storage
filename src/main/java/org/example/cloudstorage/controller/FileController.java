@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/resource")
@@ -46,5 +47,11 @@ public class FileController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(file);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<FileInfoDto>> searchFiles(@RequestParam String query){
+        List<FileInfoDto> fileInfoDtos = fileService.findByQuery(query);
+        return ResponseEntity.ok(fileInfoDtos);
     }
 }
