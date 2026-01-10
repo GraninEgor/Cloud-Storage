@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: Cloud-Storage
+  datasource:
+    url: jdbc:postgresql://localhost:5433/cloud-storage-db
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  docker:
+    compose:
+      file: compose.yaml
+      lifecycle-management: start_only
+      skip:
+        in-tests: true
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml

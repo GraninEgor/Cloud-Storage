@@ -28,11 +28,11 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull  HttpServletRequest request,@NonNull  HttpServletResponse response,@NonNull  FilterChain filterChain) throws ServletException, IOException {
         String token = getTokenFromRequest(request);
 
-        if(!jwtService.validateJwtToken(token)){
-            throw new BadCredentialsException("Invalid or expired JWT token");
+        if(token!=null && jwtService.validateJwtToken(token)){
+            setCustomUserDetailsToContextHolder(token);
         }
 
-        setCustomUserDetailsToContextHolder(token);
+        filterChain.doFilter(request, response);
     }
 
     private void setCustomUserDetailsToContextHolder(String token){
@@ -45,7 +45,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private String getTokenFromRequest(HttpServletRequest request){
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            throw new AuthenticationCredentialsNotFoundException("Authorization header is missing or invalid");
+            return null;
         }
 
         return bearerToken.substring(7);

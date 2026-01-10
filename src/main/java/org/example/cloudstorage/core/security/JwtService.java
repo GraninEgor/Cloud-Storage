@@ -16,7 +16,7 @@ import java.util.Date;
 @Component
 public class JwtService {
 
-    @Value("my-super-secret-key")
+    @Value("mysupersecretkeymysupersecretkeymysupersecretkey")
     private String jwtSecret;
 
     public AccessAndRefreshTokenDto generateAuthTokens(String username){
