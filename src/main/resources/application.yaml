@@ -1,4 +1,7 @@
 spring:
+  mvc:
+    servlet:
+      path: /api
   application:
     name: Cloud-Storage
   datasource:
@@ -8,7 +11,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -22,3 +25,5 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
+minio:
+  bucket-name: user-files
