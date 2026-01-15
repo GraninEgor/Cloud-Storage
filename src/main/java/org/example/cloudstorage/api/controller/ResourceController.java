@@ -2,7 +2,7 @@ package org.example.cloudstorage.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.api.dto.response.FileInfoDto;
-import org.example.cloudstorage.core.service.FileService;
+import org.example.cloudstorage.core.service.ResourceService;
 import org.example.cloudstorage.core.validation.ValidPath;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.InputStreamResource;
@@ -25,31 +25,31 @@ import java.util.List;
 @RequestMapping("resource")
 @RequiredArgsConstructor
 @Validated
-public class FileController {
+public class ResourceController {
 
-    private final FileService fileService;
+    private final ResourceService resourceService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FileInfoDto> uploadFile(@RequestPart("file") @NotNull MultipartFile file, @RequestParam @ValidPath String path) {
-        FileInfoDto fileInfo = fileService.upload(file, path);
+        FileInfoDto fileInfo = resourceService.upload(file, path);
         return ResponseEntity.ok(fileInfo);
     }
 
     @GetMapping
     public ResponseEntity<FileInfoDto> getFileInfo(@RequestParam @ValidPath String path)  {
-        FileInfoDto fileInfo = fileService.getInfo(path);
+        FileInfoDto fileInfo = resourceService.getInfo(path);
         return ResponseEntity.ok(fileInfo);
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteFile(@RequestParam @ValidPath String path)  {
-        fileService.delete(path);
+        resourceService.delete(path);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(@RequestParam @ValidPath String path)  {
-        InputStreamResource file = fileService.getFile(path);
+        InputStreamResource file = resourceService.getFile(path);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(file);
@@ -57,7 +57,7 @@ public class FileController {
 
     @GetMapping("/search")
     public ResponseEntity<List<FileInfoDto>> searchFiles(@RequestParam String query){
-        List<FileInfoDto> fileInfoDtos = fileService.findByQuery(query);
+        List<FileInfoDto> fileInfoDtos = resourceService.findByQuery(query);
         return ResponseEntity.ok(fileInfoDtos);
     }
 }

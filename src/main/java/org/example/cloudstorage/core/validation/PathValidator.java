@@ -9,10 +9,7 @@ public class PathValidator implements ConstraintValidator<ValidPath, String> {
 
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
-        if (s == null || s.isEmpty())
-            return false;
-
-        if(s.matches(VALID_PATH_REGEX)){
+        if (s == null || s.isEmpty() || !s.matches(VALID_PATH_REGEX)) {
             return false;
         }
 

@@ -1,6 +1,5 @@
 package org.example.cloudstorage.core.exception;
 
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -21,10 +20,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Validation error" + ex.getMessage());
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Validation error: " + ex.getMessage());
+    @ExceptionHandler(InvalidPathException.class)
+    public ResponseEntity<String> handleInvalidPath(InvalidPathException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
