@@ -20,8 +20,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Validation error" + ex.getMessage());
     }
 
-    @ExceptionHandler(InvalidPathException.class)
-    public ResponseEntity<String> handleInvalidPath(InvalidPathException ex) {
+    @ExceptionHandler(InvalidInputDataException.class)
+    public ResponseEntity<String> handleInvalidPath(InvalidInputDataException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());

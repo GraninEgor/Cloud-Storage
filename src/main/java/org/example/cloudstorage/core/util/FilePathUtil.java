@@ -4,9 +4,8 @@ import java.util.Objects;
 
 public class FilePathUtil {
 
-    private static String validPathRegex = "^(?!/)(?!.*//)(?:[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*/?)$";
-    private static String validQueryRegex = "^[A-Za-z0-9._]+$";
-
+    private static final String validPathRegex = "^(?!/)(?!.*//)(?:[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*/?)$";
+    private static final String VALID_FILE_NAME = "^(?!\\/)(?!.*\\/$)[A-Za-z0-9._\\/-]+$";
 
     public static String getResourceName(String path){
         if(getType(path).equals("FILE")){
@@ -30,15 +29,14 @@ public class FilePathUtil {
         }
     }
 
-    public static Boolean isValidPath(String path){
-        return Objects.equals(path, "") ? false : path.matches(validPathRegex);
+    public static boolean isFileNameValid(String fileName){
+        if (fileName == null){
+            return false;
+        }
+        return fileName.matches(VALID_FILE_NAME);
     }
 
-    public static Boolean isValidQuery(String path){
-        return Objects.equals(path, "") ? false : path.matches(validQueryRegex);
-    }
-
-    public static String getType(String path) {
-        return path.endsWith("/") ? "DIRECTORY" : "FILE";
+    public static ResourceType getType(String path) {
+        return path.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE;
     }
 }

@@ -4,15 +4,21 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.api.dto.response.FileInfoDto;
-import org.example.cloudstorage.core.exception.InvalidPathException;
+import org.example.cloudstorage.core.exception.InvalidInputDataException;
 import org.example.cloudstorage.core.exception.ObjectAlreadyExistsException;
 import org.example.cloudstorage.core.exception.ObjectNotFoundException;
 import org.example.cloudstorage.core.exception.StorageAccessException;
 import org.example.cloudstorage.core.security.CustomUserDetails;
 import org.example.cloudstorage.core.service.ResourceService;
 import org.example.cloudstorage.core.util.FilePathUtil;
+import org.example.cloudstorage.core.util.ResourceType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -21,7 +27,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
+
+import static org.example.cloudstorage.core.util.FilePathUtil.isFileNameValid;
 
 @Service
 @RequiredArgsConstructor
@@ -34,24 +46,32 @@ public class DefaultResourceService implements ResourceService {
 
     @Override
     public FileInfoDto upload(MultipartFile file, String path) {
-        if (!FilePathUtil.getType(path).equals("DIRECTORY")) {
-            throw new InvalidPathException("Path is not a directory");
+        if (!Objects.equals(path, "/")){
+            if (!FilePathUtil.getType(path).equals(ResourceType.DIRECTORY)) {
+                throw new InvalidInputDataException("Path is not a directory");
+            }
+            if (!isResourceExists(path)) {
+                throw new ObjectNotFoundException("Parent folder doesn't exist");
+            }
         }
 
-        if (isResourceExists(buildAbsolutePath(path, file.getName()))) {
+        if (!isFileNameValid(file.getOriginalFilename())) {
+            throw new InvalidInputDataException("Invalid file name");
+        }
+
+        if (isResourceExists(buildAbsolutePath(path, file.getOriginalFilename()))) {
             throw new ObjectAlreadyExistsException("Object with same name already exists");
         }
 
-        if (!isResourceExists(path)) {
-            throw new ObjectNotFoundException("Parent folder didn't exist");
+        try {
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(buildAbsolutePath(path, file.getOriginalFilename())).stream(file.getInputStream(), -1, 10485760).build());
+        } catch (IOException e) {
+            throw new StorageAccessException();
+        } catch (Exception e){
+            throw new RuntimeException("File input stream Error");
         }
 
-        try {
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(getUserPrefix() + file.getName()).stream(file.getInputStream(), -1, 10485760).build());
-            return getInfo(buildAbsolutePath(path, file.getName()));
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
+        return getInfo(buildAbsolutePath(path, file.getName()));
     }
 
     @Override
