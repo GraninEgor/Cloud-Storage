@@ -1,11 +1,23 @@
 package org.example.cloudstorage.core.service.implementation;
 
+import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.RemoveObjectsArgs;
+import io.minio.Result;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
 import io.minio.errors.MinioException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.api.dto.response.ResourceInfoDto;
 import org.example.cloudstorage.core.exception.InvalidInputDataException;
@@ -25,7 +37,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -82,13 +98,37 @@ public class DefaultResourceService implements ResourceService {
         } catch (MinioException e) {
             throw new StorageAccessException(e.getMessage());
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public void delete(String path) {
+        try {
+            switch (ResourcePathUtil.getType(path)) {
+                case DIRECTORY -> {
+                    Iterable<Result<Item>> results = minioClient.listObjects(
+                            ListObjectsArgs.builder().bucket(BUCKET_NAME).prefix(buildAbsolutePath(path)).recursive(true).build());
 
+                    List<DeleteObject> objects = new LinkedList<>();
+
+                    for(Result<Item> result : results){
+                        objects.add(new DeleteObject(result.get().objectName()));
+                    }
+
+                    Iterable<Result<DeleteError>> deleted =
+                            minioClient.removeObjects(
+                                    RemoveObjectsArgs.builder().bucket(BUCKET_NAME).objects(objects).build());
+                }
+                case FILE -> {
+                    minioClient.removeObject(RemoveObjectArgs.builder().bucket(BUCKET_NAME).object(buildAbsolutePath(path)).build());
+                }
+            }
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -98,6 +138,30 @@ public class DefaultResourceService implements ResourceService {
 
     @Override
     public List<ResourceInfoDto> findByQuery(String query) {
+        return List.of();
+    }
+
+    @Override
+    public ResourceInfoDto createDirectory(String path) {
+        if (!ResourcePathUtil.getType(path).equals(ResourceType.DIRECTORY)){
+            throw new InvalidInputDataException("Path is not a directory");
+        }
+
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder().bucket(BUCKET_NAME).object(buildAbsolutePath(path)).stream(
+                                    new ByteArrayInputStream(new byte[] {}), 0, -1)
+                            .build());
+            return getInfo(path);
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<ResourceInfoDto> getDirectoryResources(String path) {
         return List.of();
     }
 

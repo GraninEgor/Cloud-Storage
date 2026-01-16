@@ -12,4 +12,6 @@ public interface ResourceService {
     void delete(String path);
     InputStreamResource getFile(String path);
     List<ResourceInfoDto> findByQuery(String query);
+    ResourceInfoDto createDirectory(String path);
+    List<ResourceInfoDto> getDirectoryResources(String path);
 }

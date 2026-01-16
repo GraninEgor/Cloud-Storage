@@ -12,7 +12,7 @@ public class ResourceMapper {
         return ResourceInfoDto.builder()
                 .name(ResourcePathUtil.getResourceName(response.object()))
                 .path(ResourcePathUtil.getResourcePath(response.object()))
-                .size(response.size())
+                .size((response.size()) == 0 ? null : response.size())
                 .type(ResourcePathUtil.getType(response.object()).toString())
                 .build();
     }
