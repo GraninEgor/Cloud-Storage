@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -64,7 +65,7 @@ public class DefaultResourceService implements ResourceService {
 
     @Override
     public ResourceInfoDto upload(MultipartFile file, String path) {
-        if (path != null){
+        if (!path.equals("/")){
             if (!ResourcePathUtil.getType(path).equals(ResourceType.DIRECTORY)) {
                 throw new InvalidInputDataException("Path is not a directory");
             }
@@ -88,7 +89,7 @@ public class DefaultResourceService implements ResourceService {
         } catch (Exception e){
             throw new RuntimeException(e.getMessage());
         }
-        if (path!=null){
+        if (!path.equals("/")){
             return getInfo(path + file.getOriginalFilename());
         }
         return getInfo( file.getOriginalFilename());
@@ -175,7 +176,7 @@ public class DefaultResourceService implements ResourceService {
                     InputStream file = minioClient.getObject(
                             GetObjectArgs.builder()
                                     .bucket(BUCKET_NAME)
-                                    .object(getUserPrefix() + path)
+                                    .object(buildAbsolutePath(path))
                                     .build());
 
                     return new InputStreamResource(file);
@@ -191,7 +192,17 @@ public class DefaultResourceService implements ResourceService {
 
     @Override
     public List<ResourceInfoDto> findByQuery(String query) {
-        return List.of();
+        List<ResourceInfoDto> userResourcesPaths = getDirectoryResources("/", true);
+
+        List<ResourceInfoDto> result = new ArrayList<>();
+
+        userResourcesPaths.forEach(p -> {
+            if(p.getName().contains(query)){
+                result.add(p);
+            }
+        });
+
+        return result;
     }
 
     @Override
@@ -214,8 +225,25 @@ public class DefaultResourceService implements ResourceService {
     }
 
     @Override
-    public List<ResourceInfoDto> getDirectoryResources(String path) {
-        return List.of();
+    public List<ResourceInfoDto> getDirectoryResources(String path, boolean recursively) {
+        if (!ResourcePathUtil.getType(path).equals(ResourceType.DIRECTORY)){
+            throw new InvalidInputDataException("Path is not a directory");
+        }
+
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(BUCKET_NAME)
+                        .prefix(buildAbsolutePath(path))
+                        .recursive(recursively)
+                        .build());
+
+        try {
+            return resourceMapper.toDtos(results);
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private List<String> getDirectoryRecoursesPaths(String path){
@@ -237,9 +265,6 @@ public class DefaultResourceService implements ResourceService {
         return resourcesPaths;
     }
 
-    private String setFileName(String name) {
-        return getUserPrefix() + name;
-    }
 
     private String getUserPrefix() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -248,7 +273,7 @@ public class DefaultResourceService implements ResourceService {
             throw new AuthenticationCredentialsNotFoundException("User not authenticated");
         }
 
-        return "user-%s-files/".formatted(userDetails.getUsername());
+        return "user-%s-files".formatted(userDetails.getUsername());
     }
 
     private boolean isResourceExists(String absolutePath) {
@@ -271,11 +296,21 @@ public class DefaultResourceService implements ResourceService {
     }
 
     private String buildAbsolutePath(String path){
-        return getUserPrefix() + path;
+        if (path.equals("/")){
+            return getUserPrefix() + path;
+        }
+        else{
+            return getUserPrefix() + "/" + path;
+        }
     }
 
     private String buildAbsolutePath(String path, String fileName){
-        return getUserPrefix() + path + fileName;
+        if (path.equals("/")){
+            return getUserPrefix() + path + fileName;
+        }
+        else{
+            return getUserPrefix() + "/" + path + fileName;
+        }
     }
 
 

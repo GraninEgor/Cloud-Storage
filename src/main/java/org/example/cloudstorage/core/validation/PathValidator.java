@@ -5,7 +5,7 @@ import jakarta.validation.ConstraintValidatorContext;
 
 public class PathValidator implements ConstraintValidator<ValidPath, String> {
 
-    private static final String VALID_PATH_REGEX = "^(?!\\/{2})(?!.*\\/\\/)[A-Za-z0-9._-]+(?:\\/[A-Za-z0-9._-]+)*\\/?$";
+    private static final String VALID_PATH_REGEX = "^(?:\\/|(?:(?!\\/{2})(?!.*\\/\\/)[A-Za-z0-9._-]+(?:\\/[A-Za-z0-9._-]+)*\\/?))$";
 
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {

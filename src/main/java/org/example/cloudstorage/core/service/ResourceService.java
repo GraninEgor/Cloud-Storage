@@ -13,5 +13,9 @@ public interface ResourceService {
     InputStreamResource getResource(String path);
     List<ResourceInfoDto> findByQuery(String query);
     ResourceInfoDto createDirectory(String path);
-    List<ResourceInfoDto> getDirectoryResources(String path);
+    List<ResourceInfoDto> getDirectoryResources(String path, boolean recursively);
+
+    default List<ResourceInfoDto> getDirectoryResources(String path) {
+        return getDirectoryResources(path, false);
+    }
 }
