@@ -10,7 +10,7 @@ public interface ResourceService {
     ResourceInfoDto upload(MultipartFile file, String path);
     ResourceInfoDto getInfo(String path);
     void delete(String path);
-    InputStreamResource getFile(String path);
+    InputStreamResource getResource(String path);
     List<ResourceInfoDto> findByQuery(String query);
     ResourceInfoDto createDirectory(String path);
     List<ResourceInfoDto> getDirectoryResources(String path);

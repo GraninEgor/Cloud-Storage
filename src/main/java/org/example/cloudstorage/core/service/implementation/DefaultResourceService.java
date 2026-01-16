@@ -1,5 +1,6 @@
 package org.example.cloudstorage.core.service.implementation;
 
+import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -38,12 +39,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.example.cloudstorage.core.util.ResourcePathUtil.isFileNameValid;
 
@@ -104,21 +109,22 @@ public class DefaultResourceService implements ResourceService {
 
     @Override
     public void delete(String path) {
+        if (!isResourceExists(buildAbsolutePath(path))){
+            throw new ObjectNotFoundException("Object doesn't exist");
+        }
+
         try {
             switch (ResourcePathUtil.getType(path)) {
                 case DIRECTORY -> {
-                    Iterable<Result<Item>> results = minioClient.listObjects(
-                            ListObjectsArgs.builder().bucket(BUCKET_NAME).prefix(buildAbsolutePath(path)).recursive(true).build());
+                    List<String> resourcePaths = getDirectoryRecoursesPaths(path);
 
                     List<DeleteObject> objects = new LinkedList<>();
 
-                    for(Result<Item> result : results){
-                        objects.add(new DeleteObject(result.get().objectName()));
+                    for(String resourcePath : resourcePaths){
+                        objects.add(new DeleteObject(resourcePath));
                     }
 
-                    Iterable<Result<DeleteError>> deleted =
-                            minioClient.removeObjects(
-                                    RemoveObjectsArgs.builder().bucket(BUCKET_NAME).objects(objects).build());
+                    minioClient.removeObjects(RemoveObjectsArgs.builder().bucket(BUCKET_NAME).objects(objects).build());
                 }
                 case FILE -> {
                     minioClient.removeObject(RemoveObjectArgs.builder().bucket(BUCKET_NAME).object(buildAbsolutePath(path)).build());
@@ -132,8 +138,55 @@ public class DefaultResourceService implements ResourceService {
     }
 
     @Override
-    public InputStreamResource getFile(String path) {
-        return null;
+    public InputStreamResource getResource(String path) {
+        if (!isResourceExists(buildAbsolutePath(path))){
+            throw new ObjectNotFoundException("Object doesn't exist");
+        }
+
+        try {
+            switch (ResourcePathUtil.getType(path)) {
+                case DIRECTORY -> {
+                    List<String> recoursesPaths = getDirectoryRecoursesPaths(path);
+
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+                        for (String resourcePath : recoursesPaths) {
+                            try (InputStream is = minioClient.getObject(
+                                    GetObjectArgs.builder()
+                                            .bucket(BUCKET_NAME)
+                                            .object(resourcePath)
+                                            .build())) {
+
+                                ZipEntry entry = new ZipEntry(resourcePath);
+                                zipOutputStream.putNextEntry(entry);
+
+                                byte[] buffer = new byte[4096];
+                                int len;
+                                while ((len = is.read(buffer)) > 0) {
+                                    zipOutputStream.write(buffer, 0, len);
+                                }
+                                zipOutputStream.closeEntry();
+                            }
+                        }
+                    }
+                    return new InputStreamResource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
+                }
+                case FILE -> {
+                    InputStream file = minioClient.getObject(
+                            GetObjectArgs.builder()
+                                    .bucket(BUCKET_NAME)
+                                    .object(getUserPrefix() + path)
+                                    .build());
+
+                    return new InputStreamResource(file);
+                }
+                default -> throw new IllegalArgumentException("Unknown resource type: " + path);
+            }
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -163,6 +216,25 @@ public class DefaultResourceService implements ResourceService {
     @Override
     public List<ResourceInfoDto> getDirectoryResources(String path) {
         return List.of();
+    }
+
+    private List<String> getDirectoryRecoursesPaths(String path){
+        List<String> resourcesPaths = new LinkedList<>();
+
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder().bucket(BUCKET_NAME).prefix(buildAbsolutePath(path)).recursive(true).build());
+
+        try {
+            for(Result<Item> result : results){
+                resourcesPaths.add(result.get().objectName());
+            }
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return resourcesPaths;
     }
 
     private String setFileName(String name) {

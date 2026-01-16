@@ -50,7 +50,7 @@ public class ResourceController {
 
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(@RequestParam @ValidPath String path)  {
-        InputStreamResource file = resourceService.getFile(path);
+        InputStreamResource file = resourceService.getResource(path);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(file);
