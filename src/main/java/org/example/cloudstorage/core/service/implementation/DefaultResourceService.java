@@ -3,21 +3,19 @@ package org.example.cloudstorage.core.service.implementation;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.InsufficientDataException;
-import io.minio.errors.InternalException;
-import io.minio.errors.InvalidResponseException;
-import io.minio.errors.ServerException;
-import io.minio.errors.XmlParserException;
+import io.minio.errors.MinioException;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.api.dto.response.FileInfoDto;
+import org.example.cloudstorage.api.dto.response.ResourceInfoDto;
 import org.example.cloudstorage.core.exception.InvalidInputDataException;
 import org.example.cloudstorage.core.exception.ObjectAlreadyExistsException;
 import org.example.cloudstorage.core.exception.ObjectNotFoundException;
 import org.example.cloudstorage.core.exception.StorageAccessException;
+import org.example.cloudstorage.core.mapper.ResourceMapper;
 import org.example.cloudstorage.core.security.CustomUserDetails;
 import org.example.cloudstorage.core.service.ResourceService;
-import org.example.cloudstorage.core.util.FilePathUtil;
+import org.example.cloudstorage.core.util.ResourcePathUtil;
 import org.example.cloudstorage.core.util.ResourceType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -28,26 +26,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
 
-import static org.example.cloudstorage.core.util.FilePathUtil.isFileNameValid;
+import static org.example.cloudstorage.core.util.ResourcePathUtil.isFileNameValid;
 
 @Service
 @RequiredArgsConstructor
 public class DefaultResourceService implements ResourceService {
 
     private final MinioClient minioClient;
+    private final ResourceMapper resourceMapper;
 
     @Value("${minio.bucket-name}")
-    private String bucketName;
+    private String BUCKET_NAME;
 
     @Override
-    public FileInfoDto upload(MultipartFile file, String path) {
-        if (!Objects.equals(path, "/")){
-            if (!FilePathUtil.getType(path).equals(ResourceType.DIRECTORY)) {
+    public ResourceInfoDto upload(MultipartFile file, String path) {
+        if (path != null){
+            if (!ResourcePathUtil.getType(path).equals(ResourceType.DIRECTORY)) {
                 throw new InvalidInputDataException("Path is not a directory");
             }
             if (!isResourceExists(path)) {
@@ -64,19 +61,29 @@ public class DefaultResourceService implements ResourceService {
         }
 
         try {
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(buildAbsolutePath(path, file.getOriginalFilename())).stream(file.getInputStream(), -1, 10485760).build());
+            minioClient.putObject(PutObjectArgs.builder().bucket(BUCKET_NAME).object(buildAbsolutePath(path, file.getOriginalFilename())).stream(file.getInputStream(), -1, 10485760).build());
         } catch (IOException e) {
-            throw new StorageAccessException();
+            throw new StorageAccessException(e.getMessage());
         } catch (Exception e){
-            throw new RuntimeException("File input stream Error");
+            throw new RuntimeException(e.getMessage());
         }
-
-        return getInfo(buildAbsolutePath(path, file.getName()));
+        if (path!=null){
+            return getInfo(path + file.getOriginalFilename());
+        }
+        return getInfo( file.getOriginalFilename());
     }
 
     @Override
-    public FileInfoDto getInfo(String path) {
-        return null;
+    public ResourceInfoDto getInfo(String path) {
+        try {
+            StatObjectResponse response = minioClient.statObject(
+                    StatObjectArgs.builder().bucket(BUCKET_NAME).object(buildAbsolutePath(path)).build());
+            return resourceMapper.toDto(response);
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override
@@ -90,7 +97,7 @@ public class DefaultResourceService implements ResourceService {
     }
 
     @Override
-    public List<FileInfoDto> findByQuery(String query) {
+    public List<ResourceInfoDto> findByQuery(String query) {
         return List.of();
     }
 
@@ -112,7 +119,7 @@ public class DefaultResourceService implements ResourceService {
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()
-                            .bucket(bucketName)
+                            .bucket(BUCKET_NAME)
                             .object(absolutePath)
                             .build()
             );

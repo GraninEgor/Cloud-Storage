@@ -1,7 +1,7 @@
 package org.example.cloudstorage.api.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.api.dto.response.FileInfoDto;
+import org.example.cloudstorage.api.dto.response.ResourceInfoDto;
 import org.example.cloudstorage.core.service.ResourceService;
 import org.example.cloudstorage.core.validation.ValidPath;
 import org.jetbrains.annotations.NotNull;
@@ -30,14 +30,14 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<FileInfoDto> uploadFile(@RequestPart("file") @NotNull MultipartFile file, @RequestParam @ValidPath String path) {
-        FileInfoDto fileInfo = resourceService.upload(file, path);
+    public ResponseEntity<ResourceInfoDto> uploadResource(@RequestPart("file") @NotNull MultipartFile file, @RequestParam(required = false) @ValidPath String path) {
+        ResourceInfoDto fileInfo = resourceService.upload(file, path);
         return ResponseEntity.ok(fileInfo);
     }
 
     @GetMapping
-    public ResponseEntity<FileInfoDto> getFileInfo(@RequestParam @ValidPath String path)  {
-        FileInfoDto fileInfo = resourceService.getInfo(path);
+    public ResponseEntity<ResourceInfoDto> getResourceInfo(@RequestParam @ValidPath String path)  {
+        ResourceInfoDto fileInfo = resourceService.getInfo(path);
         return ResponseEntity.ok(fileInfo);
     }
 
@@ -56,8 +56,8 @@ public class ResourceController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<FileInfoDto>> searchFiles(@RequestParam String query){
-        List<FileInfoDto> fileInfoDtos = resourceService.findByQuery(query);
-        return ResponseEntity.ok(fileInfoDtos);
+    public ResponseEntity<List<ResourceInfoDto>> searchFiles(@RequestParam String query){
+        List<ResourceInfoDto> resourceInfoDtos = resourceService.findByQuery(query);
+        return ResponseEntity.ok(resourceInfoDtos);
     }
 }

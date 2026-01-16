@@ -35,7 +35,7 @@ public class JwtService {
 
 
     private String generateAccessToken(String username){
-        Date date = Date.from(LocalDateTime.now().plusMinutes(30).atZone(ZoneId.systemDefault()).toInstant());
+        Date date = Date.from(LocalDateTime.now().plusMinutes(180).atZone(ZoneId.systemDefault()).toInstant());
         return Jwts.builder()
                 .setSubject(username)
                 .setExpiration(date)

@@ -1,5 +1,6 @@
 package org.example.cloudstorage.core.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -8,15 +9,16 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<String> handleAuthExcerption(AuthenticationException ex){
+    public ResponseEntity<String> handleAuthException(AuthenticationException ex){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Authentication failed" + ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidationExcerption(MethodArgumentNotValidException ex){
+    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException ex){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Validation error" + ex.getMessage());
     }
 
@@ -27,8 +29,17 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(ObjectAlreadyExistsException.class)
+    public ResponseEntity<String> handleAlreadyExistsException(ObjectAlreadyExistsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ex.getMessage());
+    }
+
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleOtherExcerption(Exception ex){
+    public ResponseEntity<String> handleOtherException(Exception ex){
+        log.warn("Server error",ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error" + ex.getMessage());
     }
 }
