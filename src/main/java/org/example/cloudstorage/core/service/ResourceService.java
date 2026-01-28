@@ -14,7 +14,7 @@ public interface ResourceService {
     List<ResourceInfoDto> findByQuery(String query);
     ResourceInfoDto createDirectory(String path);
     List<ResourceInfoDto> getDirectoryResources(String path, boolean recursively);
-
+    ResourceInfoDto changeResourcePath(String from, String to);
     default List<ResourceInfoDto> getDirectoryResources(String path) {
         return getDirectoryResources(path, false);
     }

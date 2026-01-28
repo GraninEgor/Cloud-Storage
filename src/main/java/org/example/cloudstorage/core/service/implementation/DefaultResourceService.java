@@ -1,5 +1,7 @@
 package org.example.cloudstorage.core.service.implementation;
 
+import io.minio.CopyObjectArgs;
+import io.minio.CopySource;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
@@ -203,6 +205,40 @@ public class DefaultResourceService implements ResourceService {
         });
 
         return result;
+    }
+
+    @Override
+    public ResourceInfoDto changeResourcePath(String from, String to) {
+        if (!ResourcePathUtil.getType(from).equals(ResourceType.FILE) ){
+            throw new InvalidInputDataException("The path to the object is not absolute");
+        }
+
+        if (!ResourcePathUtil.getType(to).equals(ResourceType.FILE) ){
+            throw new InvalidInputDataException("The path to the object is not absolute");
+        }
+
+        if (!isResourceExists(buildAbsolutePath(from))){
+            throw new ObjectNotFoundException("Object doesn't exist");
+        }
+
+        try{
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(BUCKET_NAME)
+                            .object(buildAbsolutePath(to))
+                            .source(
+                                    CopySource.builder()
+                                            .bucket(BUCKET_NAME)
+                                            .object(buildAbsolutePath(from))
+                                            .build())
+                            .build());
+        } catch (MinioException e) {
+            throw new StorageAccessException(e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
+        return getInfo(to);
     }
 
     @Override

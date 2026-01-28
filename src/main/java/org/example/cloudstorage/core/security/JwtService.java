@@ -22,14 +22,14 @@ public class JwtService {
     public AccessAndRefreshTokenDto generateAuthTokens(String username){
         return AccessAndRefreshTokenDto.builder()
                 .accessToken(generateAccessToken(username))
-                .refreshToker(generateRefreshToken(username))
+                .refreshToken(generateRefreshToken(username))
                 .build();
     }
 
     public AccessAndRefreshTokenDto refresh(String username, String refreshToken){
         return AccessAndRefreshTokenDto.builder()
                 .accessToken(generateAccessToken(username))
-                .refreshToker(refreshToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 

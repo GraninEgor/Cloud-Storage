@@ -29,7 +29,7 @@ public class ResourceController {
 
     private final ResourceService resourceService;
 
-    @PostMapping(name = "resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResourceInfoDto> uploadResource(@RequestPart("file") @NotNull MultipartFile file, @RequestParam(required = false, defaultValue = "/") @ValidPath String path) {
         ResourceInfoDto fileInfo = resourceService.upload(file, path);
         return ResponseEntity.ok(fileInfo);
@@ -59,6 +59,12 @@ public class ResourceController {
     public ResponseEntity<List<ResourceInfoDto>> searchFiles(@RequestParam String query){
         List<ResourceInfoDto> resourceInfoDtos = resourceService.findByQuery(query);
         return ResponseEntity.ok(resourceInfoDtos);
+    }
+
+    @GetMapping("resource/move")
+    public ResponseEntity<ResourceInfoDto> searchFiles(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to){
+        ResourceInfoDto resourceInfoDto = resourceService.changeResourcePath(from, to);
+        return ResponseEntity.ok(resourceInfoDto);
     }
 
     @GetMapping("/directory")

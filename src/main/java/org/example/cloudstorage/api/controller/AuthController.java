@@ -2,6 +2,7 @@ package org.example.cloudstorage.api.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.api.dto.request.RefreshTokenDto;
 import org.example.cloudstorage.api.dto.request.UserCredentialsDto;
 import org.example.cloudstorage.api.dto.response.AccessAndRefreshTokenDto;
 import org.example.cloudstorage.core.security.service.AuthService;
@@ -21,6 +22,12 @@ public class AuthController {
     @PostMapping("sign-in")
     public ResponseEntity<AccessAndRefreshTokenDto> singIn(@Valid @RequestBody UserCredentialsDto userCredentialsDto){
         AccessAndRefreshTokenDto accessAndRefreshTokenDto = authService.signIn(userCredentialsDto);
+        return ResponseEntity.ok(accessAndRefreshTokenDto);
+    }
+
+    @PostMapping("refresh")
+    public ResponseEntity<AccessAndRefreshTokenDto> refresh(@RequestBody RefreshTokenDto refreshTokenDto){
+        AccessAndRefreshTokenDto accessAndRefreshTokenDto = authService.refresh(refreshTokenDto);
         return ResponseEntity.ok(accessAndRefreshTokenDto);
     }
 
